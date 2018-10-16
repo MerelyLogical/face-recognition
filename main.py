@@ -18,5 +18,3 @@ for i in range(0, 20):
     plt.subplot(4,5,i+1)
     plt.axis('off')
     plt.imshow(pic, cmap='gray')
-
-plt.show()
