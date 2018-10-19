@@ -40,14 +40,18 @@ S = (1/phi_matrix.shape[1])* np.dot(phi_matrix, phi_matrix.transpose())
 
 eival, eivec = np.linalg.eig(S)
 
+eivec = eivec.transpose()
+sorceEigenvalue = np.argsort(eival)
+nPcaEigenVector = sorceEigenvalue[-20:]
+pcaEigenvector = eivec[nPcaEigenVector]
+'''
 mean_pic = np.swapaxes( np.reshape( np.array(mean_face), (46, 56) ), 0, 1)
 plt.axis('off')
 plt.imshow(mean_pic, cmap='gray') 
+'''
 
-""""
 for i in range(0, 20):
-    pic = np.swapaxes( np.reshape( np.array(data[:,i]), (46, 56) ), 0, 1)
+    pic = np.swapaxes( np.reshape( np.array(pcaEigenvector[i,:]), (46, 56) ), 0, 1)
     plt.subplot(4,5,i+1)
     plt.axis('off')
-    plt.imshow(pic)
-"""
+    plt.imshow(abs(pic), cmap='gray')
