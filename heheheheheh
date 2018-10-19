@@ -44,6 +44,7 @@ eivec = eivec.transpose()
 sorceEigenvalue = np.argsort(eival)
 nPcaEigenVector = sorceEigenvalue[-20:]
 pcaEigenvector = eivec[nPcaEigenVector]
+pcaEigenvector = pcaEigenvector[::-1]
 '''
 mean_pic = np.swapaxes( np.reshape( np.array(mean_face), (46, 56) ), 0, 1)
 plt.axis('off')
