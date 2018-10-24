@@ -48,8 +48,7 @@ LDeivec = LDeivec.transpose()
 indexEigenvalue = np.argsort(eival)
 LDindexEigenvalue = np.argsort(LDeival)
 
-M = 416
-
+M = 20
 pcaEigenval = eival[indexEigenvalue[-M:]]
 LDpcaEigenval = LDeival[LDindexEigenvalue[-M:]]
 
@@ -68,11 +67,14 @@ for i in range(0, M):
     normedvec = vecdir/np.linalg.norm(vecdir)
     
     LDreeigenvec = np.column_stack((LDreeigenvec ,LDnormed))
-    EigenVec_difference =  np.column_stack((EigenVec_difference, (normedvec - LDnormed)))
+    EigenVec_difference =  np.column_stack((EigenVec_difference, (abs(normedvec) - abs(LDnormed))))
     
 
-bestpcaEigenvector = pcaEigenvec[::-1]
-bestLDpcaEigenvector = LDpcaEigenvec[::-1]   # print the face with high energy first
+bestpcaEigenvec = pcaEigenvec[::-1]
+bestLDpcaEigenvec = LDreeigenvec.transpose()[::-1][:-1,:]   # print the eigenface with high energy first
+
+bestpcaEigenval = pcaEigenval[::-1]
+bestLDpcaEigenval = LDpcaEigenval[::-1]   # print the eigenface with high energy first
 
 """
 mean_pic = np.swapaxes( np.reshape( np.array(mean_face), (46, 56) ), 0, 1)
@@ -82,37 +84,33 @@ plt.imshow(mean_pic, cmap='gray')
 
 
 #reconstruction of the image
-pic_idx = 40
-ai = np.dot(phi_matrix[:,pic_idx].transpose(), pcaEigenvec.transpose()[:, 0])
-LDai = np.dot(phi_matrix[:,pic_idx].transpose(), LDreeigenvec[:, 1])
-
-sum = mean_face +  np.dot(ai,pcaEigenvec.transpose()[:, 0])
-LDsum = mean_face +  np.dot(ai,LDreeigenvec[:, 1])
-
-for i in range(1,M):
-    ai = np.dot(phi_matrix[:,pic_idx].transpose(), pcaEigenvec.transpose()[:, i])
-    sum = sum +np.dot(ai,pcaEigenvec.transpose()[:, i])
+for pic_idx in range (0, 18):
+    ai = np.dot(phi_matrix[:,pic_idx].transpose(), bestpcaEigenvec.transpose()[:, 0])
+    LDai = np.dot(phi_matrix[:,pic_idx].transpose(), bestLDpcaEigenvec.transpose()[:, 0])
     
-    LDai = np.dot(phi_matrix[:,pic_idx].transpose(), LDreeigenvec[:, 2])
-    LDsum = LDsum +np.dot(ai,LDreeigenvec[:, i+1])
-
-
-reconstruct_pic = np.swapaxes( np.reshape( np.array(sum), (46, 56)), 0, 1)
-original_pic =  np.swapaxes( np.reshape( np.array(data_train[:,pic_idx]), (46, 56)), 0, 1)
-LDreconstruct_pic =  np.swapaxes( np.reshape( np.array(LDsum), (46, 56)), 0, 1)
-
-
-
-
-
-plt.subplot(1,3,1)
-plt.axis('off')
-plt.imshow(abs(original_pic ),cmap='gray')
-
-plt.subplot(1,3,2)
-plt.axis('off')
-plt.imshow(abs(reconstruct_pic),cmap='gray')
-
-plt.subplot(1,3,3)
-plt.axis('off')
-plt.imshow(abs(reconstruct_pic),cmap='gray')
+    nsum = mean_face +  np.dot(ai,bestpcaEigenvec.transpose()[:, 0])
+    LDsum = mean_face +  np.dot(LDai,bestLDpcaEigenvec.transpose()[:, 0])
+    
+    for i in range(1,M):
+        ai = np.dot(phi_matrix[:,pic_idx].transpose(), bestpcaEigenvec.transpose()[:, i])
+        nsum = nsum + np.dot(ai,bestpcaEigenvec.transpose()[:, i])
+        
+        LDai = np.dot(phi_matrix[:,pic_idx].transpose(), bestLDpcaEigenvec.transpose()[:, i])
+        LDsum = LDsum + np.dot(LDai,bestLDpcaEigenvec.transpose()[:, i])
+    
+    
+    reconstruct_pic = np.swapaxes( np.reshape( np.array(nsum), (46, 56)), 0, 1)
+    original_pic =  np.swapaxes( np.reshape( np.array(data_train[:,pic_idx]), (46, 56)), 0, 1)
+    LDreconstruct_pic =  np.swapaxes( np.reshape( np.array(LDsum), (46, 56)), 0, 1)
+    
+    plt.subplot(6,9,3*pic_idx+1)
+    plt.axis('off')
+    plt.imshow(abs(original_pic ),cmap='gray')
+    
+    plt.subplot(6,9,3*pic_idx+2)
+    plt.axis('off')
+    plt.imshow(abs(reconstruct_pic),cmap='gray')
+    
+    plt.subplot(6,9,3*pic_idx+3)
+    plt.axis('off')
+    plt.imshow(abs(LDreconstruct_pic),cmap='gray')
