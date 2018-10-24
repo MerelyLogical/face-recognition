@@ -77,11 +77,11 @@ bestpcaEigenval = pcaEigenval[::-1]
 bestLDpcaEigenval = LDpcaEigenval[::-1]   # print the eigenface with high energy first
 
 """
+# plots the mean face
 mean_pic = np.swapaxes( np.reshape( np.array(mean_face), (46, 56) ), 0, 1)
 plt.axis('off')
 plt.imshow(mean_pic, cmap='gray') 
 """
-
 
 #reconstruction of the image
 for pic_idx in range (0, 18):
@@ -97,6 +97,8 @@ for pic_idx in range (0, 18):
         
         LDai = np.dot(phi_matrix[:,pic_idx].transpose(), bestLDpcaEigenvec.transpose()[:, i])
         LDsum = LDsum + np.dot(LDai,bestLDpcaEigenvec.transpose()[:, i])
+        
+        
     
     
     reconstruct_pic = np.swapaxes( np.reshape( np.array(nsum), (46, 56)), 0, 1)
@@ -114,3 +116,7 @@ for pic_idx in range (0, 18):
     plt.subplot(6,9,3*pic_idx+3)
     plt.axis('off')
     plt.imshow(abs(LDreconstruct_pic),cmap='gray')
+
+#NN
+test_pic = data_test[:,0]
+test_arr = np.repeat(test_pic, len(label_train))
