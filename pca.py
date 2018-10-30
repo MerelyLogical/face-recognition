@@ -27,6 +27,7 @@ indexEigenvalue = np.argsort(eival)
 pcaEigenval = eival[indexEigenvalue[-M:]]
 pcaEigenvec = eivec[indexEigenvalue[-M:]]
 bestpcaEigenvec = pcaEigenvec[::-1]     # print the eigenface with high energy first
+bestpcaEigenval = abs(pcaEigenval[::-1]) 
 
 for i in range(0, 20):
     pic = np.swapaxes( np.reshape( np.array(bestpcaEigenvec[i,:]), (46, 56) ), 0, 1)
