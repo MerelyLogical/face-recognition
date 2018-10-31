@@ -57,7 +57,10 @@ for pic_idx in range (0, 10):
     
     original_pic =  np.swapaxes( np.reshape( np.array(data_train[:,pic_idx]), (46, 56)), 0, 1)
     LDreconstruct_pic =  np.swapaxes( np.reshape( np.array(LDsum), (46, 56)), 0, 1)
-   
+    
+    reconstruct_error = np.linalg.norm(data_train[:,pic_idx]- LDsum)
+    percentage =reconstruct_error/np.linalg.norm(data_train[:,pic_idx])
+    print(percentage)
     
     plt.subplot(5,4,2*pic_idx+1)
     plt.axis('off')
