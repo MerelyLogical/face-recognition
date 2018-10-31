@@ -29,6 +29,7 @@ pcaEigenvec = eivec[indexEigenvalue[-M:]]
 bestpcaEigenvec = pcaEigenvec[::-1]     # print the eigenface with high energy first
 bestpcaEigenval = abs(pcaEigenval[::-1]) 
 
+ratio = np.sum(bestpcaEigenval[:50])/np.sum(bestpcaEigenval)    # percentage of energy when selecting best 50 eigenvector
 for i in range(0, 20):
     pic = np.swapaxes( np.reshape( np.array(bestpcaEigenvec[i,:]), (46, 56) ), 0, 1)
     plt.subplot(4,5,i+1)
