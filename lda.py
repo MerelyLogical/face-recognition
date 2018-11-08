@@ -34,8 +34,9 @@ for element in range(len(distinct_class)):
            count = count + 1
     count_diffclass[element] = count
     mi = sum_mi / count                                       #single class mean in D dimensional space
-    m = np.column_stack((m, (mi)))                              #stack mi into an array m
+    m = np.column_stack((m, mi))                              #stack mi into an array m
     count = 0
+class_vs_amount =  np.column_stack((distinct_class, count_diffclass))   
 
 for i in range(0, 20):
     pic = np.swapaxes( np.reshape( np.array(m[:,i+1]), (46, 56) ), 0, 1)
