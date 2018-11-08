@@ -31,6 +31,16 @@ data_train = np.delete(data_train, 2576, 0)
 data_test = np.delete(data_test, 2576, 0)
 
 
+#In training set, check how many data are from the same class 
+count = 0
+type_repeat = []
+for i in range (0, 416):
+    for j in range(0, 416):
+        if label_train[i] == label_train[j]:
+            count = count+1
+    type_repeat.append(count)
+    count = 0
+type_repeat.sort()
 
 #Computing the eigenvalue and eigenvector of the training data, storing them in files
 mean_face = np.mean(data_train, axis=1)        
