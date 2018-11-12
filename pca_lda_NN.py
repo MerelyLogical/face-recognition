@@ -51,6 +51,7 @@ for element in range(len(distinct_class)):
     count_diffclass[element] = count
     mi = sum_mi / count                                       #single class mean in D dimensional space
     Sb = np.outer((mi-m),(mi-m)) + Sb
+    sum_mi = np.zeros(shape=(2576,1)) 
     m_arr = np.column_stack((m_arr, mi))                              #stack mi into an array m
     count = 0
 m_arr = np.delete(m_arr,0,1)
