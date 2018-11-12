@@ -20,7 +20,7 @@ eivec = np.load("eivec2.npy");
 
 #--------------------------------------------------------------------------------
 # Doing PCA first 
-M_pca = 364
+M_pca = 25
 eivec = eivec.transpose()          # transpose it to sort the eigen vectors
 indexEigenvalue = np.argsort(eival)
 pcaEigenval = eival[indexEigenvalue[-M_pca:]]
@@ -33,7 +33,7 @@ bestpcaEigenval = abs(pcaEigenval[::-1])
 #find class mean in D-dimensional space
 distinct_class = np.unique(label_train)                           # types of distinct faces
 count_diffclass =np.zeros(len(distinct_class))                      # count amount of faces for each class
-sum_mi = np.zeros(shape=(2576,1))                      # sum of faces for the same class
+sum_mi = np.zeros(2576)                      # sum of faces for the same class
 Si = np.zeros(shape=(2576,2576)) 
 Sw = np.zeros(shape=(2576,2576)) 
 Sb = np.zeros(shape=(2576,2576)) 
@@ -44,11 +44,11 @@ m = np.mean(data_train, axis=1)
 for element in range(len(distinct_class)):
     for i in range (len(label_train)):
         if distinct_class[element] == label_train[i]:
-           sum_mi = data_train[:,i] +sum_mi[element]
+           sum_mi = data_train[:,i] + sum_mi
            count = count + 1
     count_diffclass[element] = count
     mi = sum_mi / count                                       #single class mean in D dimensional space
-    sum_mi = np.zeros(shape=(2576,1)) 
+    sum_mi = np.zeros(2576) 
     Sb = np.outer((mi-m),(mi-m)) + Sb
     m_arr = np.column_stack((m_arr, mi))                              #stack mi into an array m
     count = 0
@@ -71,7 +71,7 @@ Sb_pca = np.dot(np.dot(bestpcaEigenvec,Sb),bestpcaEigenvec.transpose())
 S_lda = np.dot(np.linalg.inv(Sw_pca),Sb_pca) 
 eival_lda, eivec_lda = np.linalg.eig(S_lda)
 
-M_lda = 51
+M_lda = 20
 eivec_lda = eivec_lda.transpose()          # transpose it to sort the eigen vectors
 indexEigenvalue_lda = np.argsort(eival_lda)
 ldaEigenval = eival_lda[indexEigenvalue_lda[-M_lda:]]
@@ -87,5 +87,5 @@ for i in range(0, 20):
     plt.subplot(4,5,i+1)
     plt.axis('off')
     plt.imshow(abs(pic), cmap='gray')
-    
+ 
 # test
