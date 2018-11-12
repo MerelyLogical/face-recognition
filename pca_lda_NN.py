@@ -35,7 +35,7 @@ bestpcaEigenval = abs(pcaEigenval[::-1])
 #find class mean in D-dimensional space
 distinct_class = np.unique(label_train)                           # types of distinct faces
 count_diffclass =np.zeros(len(distinct_class))                      # count amount of faces for each class
-sum_mi = np.zeros(shape=(2576,1))                      # sum of faces for the same class
+sum_mi = np.zeros(2576)                      # sum of faces for the same class
 Si = np.zeros(shape=(2576,2576)) 
 Sw = np.zeros(shape=(2576,2576)) 
 Sb = np.zeros(shape=(2576,2576)) 
@@ -46,24 +46,24 @@ m = np.mean(data_train, axis=1)
 for element in range(len(distinct_class)):
     for i in range (len(label_train)):
         if distinct_class[element] == label_train[i]:
-           sum_mi = data_train[:,i] +sum_mi[element]
+           sum_mi = data_train[:,i] + sum_mi
            count = count + 1
     count_diffclass[element] = count
     mi = sum_mi / count                                       #single class mean in D dimensional space
+    sum_mi = np.zeros(2576) 
     Sb = np.outer((mi-m),(mi-m)) + Sb
-    sum_mi = np.zeros(shape=(2576,1)) 
     m_arr = np.column_stack((m_arr, mi))                              #stack mi into an array m
     count = 0
 m_arr = np.delete(m_arr,0,1)
 class_vs_amount =  np.column_stack((distinct_class, count_diffclass))  
 
-Sw_rank = []
+#Sw_rank = []
 for element in range(len(distinct_class)):
     for i in range (len(label_train)): 
         if distinct_class[element] == label_train[i]:
             Si = np.outer((data_train[:,i] - m_arr[:,element]),(data_train[:,i] - m_arr[:,element])) + Si
     Sw = Sw + Si
-    Sw_rank.append(np.linalg.matrix_rank(Sw))
+    #Sw_rank.append(np.linalg.matrix_rank(Sw))
     Si = np.zeros(shape=(2576,2576))        
 
 
