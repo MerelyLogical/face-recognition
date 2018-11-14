@@ -1,91 +1,77 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 16 20:41:29 2018
-@author: zw4{2,3}15
+Created on Thursday 8th Nov 20:40:54 2018
+@author: zw4215, zw4315
 """
-
-import scipy.io as sio
+# Q3 LDA Ensemble for Face Recognition 
+# PCA-LDA
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
 
-mat = sio.loadmat('face.mat')
-data = mat.get("X", "Data read error")
-label = mat.get("l", "Label read error")
+#load the variables from files
+data_train = np.load("data_train.npy");
+label_train = np.load("label_train.npy");
+data_test = np.load("data_test.npy");
+label_test = np.load("label_test.npy");
+phi_matrix = np.load("phi_matrix.npy");
+eival = np.load("eival.npy");
+eivec = np.load("eivec.npy");
+
+#find class mean in D-dimensional space
+distinct_class = np.unique(label_train)                           # types of distinct faces
+count_diffclass =np.zeros(len(distinct_class))                      # count amount of faces for each class
+sum_mi = np.zeros(shape=(2576,1))                      # sum of faces for the same class
+Si = np.zeros(shape=(2576,2576)) 
+Sw = np.zeros(shape=(2576,2576)) 
+Sb = np.zeros(shape=(2576,2576)) 
+m_arr = np.empty(shape=(2576,1))                              # array of class mean in D dimensional space
+count = 0
+m = np.mean(data_train, axis=1) 
+
+for element in range(len(distinct_class)):
+    for i in range (len(label_train)):
+        if distinct_class[element] == label_train[i]:
+           sum_mi = data_train[:,i] +sum_mi[element]
+           count = count + 1
+    count_diffclass[element] = count
+    mi = sum_mi / count                                       #single class mean in D dimensional space
+    Sb = np.outer((mi-m),(mi-m)) + Sb       
+    m_arr = np.column_stack((m_arr, mi))                              #stack mi into an array m
+    count = 0
+m_arr = np.delete(m_arr,0,1)
+class_vs_amount =  np.column_stack((distinct_class, count_diffclass))  
 
 
-data_label = np.vstack([data, label])
-data_train, data_test = train_test_split( data_label.transpose(), test_size=0.2, random_state=42)  #random_state split the data in a certain way
+for element in range(len(distinct_class)):
+    for i in range (len(label_train)): 
+        if distinct_class[element] == label_train[i]:
+            Si = np.outer((data_train[:,i] - m_arr[:,element]),(data_train[:,i] - m_arr[:,element])) + Si           
+    Sw = Sw + Si
+    Si = np.zeros(shape=(2576,2576))        
 
-data_train = data_train.transpose()
-data_test = data_test.transpose()
+S_lda = np.dot(np.linalg.inv(Sw),Sb) 
+eival_lda, eivec_lda = np.linalg.eig(S_lda)
 
-
-label_train = data_train[2576,:]
-label_test = data_test[2576,:]
-data_train = np.delete(data_train, 2576, 0)
-data_test = np.delete(data_test, 2576, 0)
-
-
-mean_face = np.mean(data_train, axis=1) 
-phi_matrix = data_train[:,0] - mean_face
-
-
-for i in range (1,data_train.shape[1]):
-   column_sub = data_train[:,i] - mean_face
-   phi_matrix = np.column_stack((phi_matrix, column_sub))
-   
-
-S = (np.dot(phi_matrix, phi_matrix.transpose()))/phi_matrix.shape[1]
-eival, eivec = np.linalg.eig(S)
-
-LDS = (np.dot(phi_matrix.transpose(), phi_matrix))/phi_matrix.shape[1]      #(1/N)*ATA
-LDeival, LDeivec = np.linalg.eig(LDS)          #low -dimensional computation
-
-eivec = eivec.transpose()
-LDeivec = LDeivec.transpose()
-
-indexEigenvalue = np.argsort(eival)
-LDindexEigenvalue = np.argsort(LDeival)
-
-M = 20
-
-pcaEigenval = eival[indexEigenvalue[-M:]]
-LDpcaEigenval = LDeival[LDindexEigenvalue[-M:]]
-
-pcaEigenvec = eivec[indexEigenvalue[-M:]]
-LDpcaEigenvec = LDeivec[LDindexEigenvalue[-M:]]
-
-EigenVal_difference =  pcaEigenval - LDpcaEigenval   # success, so low dimensional computation gets the same eigen value
-
-EigenVec_difference = np.zeros(2576)
-
-for i in range(0, M):
-    LDvecdir = np.dot(phi_matrix, LDpcaEigenvec[i,:])
-    LDnormed = LDvecdir/np.linalg.norm(LDvecdir)
-    vecdir = pcaEigenvec[i,:]
-    normedvec = vecdir/np.linalg.norm(vecdir)
-    EigenVec_difference =  np.column_stack((EigenVec_difference, (normedvec - LDnormed)))
-
-bestpcaEigenvector = pcaEigenvec[::-1]
-bestLDpcaEigenvector = LDpcaEigenvec[::-1]   # print the face with high energy first
-
-"""
-mean_pic = np.swapaxes( np.reshape( np.array(mean_face), (46, 56) ), 0, 1)
-plt.axis('off')
-plt.imshow(mean_pic, cmap='gray') 
-"""
-"""
-ai = np.dot(phi_matrix.transpose(), pcaEigenvector.transpose()[:, 0])
-sum = mean_face +  np.dot(ai,pcaEigenvector.transpose()[:, 0])
-for i in range(1,M):
-    ai = np.dot(phi_matrix.transpose(), pcaEigenvector.transpose()[:, i])
-    sum = sum +np.dot(ai,pcaEigenvector.transpose()[:, i])
-"""    #feel something wrong with the dimension
-
+M_lda = 20
+eivec_lda = eivec_lda.transpose()          # transpose it to sort the eigen vectors
+indexEigenvalue_lda = np.argsort(eival_lda)
+ldaEigenval = eival_lda[indexEigenvalue_lda[-M_lda:]]
+ldaEigenvec = eivec_lda[indexEigenvalue_lda[-M_lda:]]
+bestldaEigenvec = ldaEigenvec[::-1]     # print the eigenface with high energy first
+bestldaEigenval = abs(ldaEigenval[::-1]) 
 
 for i in range(0, 20):
-    pic = np.swapaxes( np.reshape( np.array(pcaEigenvec[i,:]), (46, 56) ), 0, 1)
+    pic = np.swapaxes( np.reshape( np.array(bestldaEigenvec[i,:]), (46, 56) ), 0, 1)
     plt.subplot(4,5,i+1)
     plt.axis('off')
-    plt.imshow(abs(pic),cmap='gray')
+    plt.imshow(abs(pic), cmap='gray')
+    
+    
+"""    
+for i in range(0, 20):
+    pic = np.swapaxes( np.reshape( np.array(m_arr[:,i+1]), (46, 56) ), 0, 1)
+    plt.subplot(4,5,i+1)
+    plt.axis('off')
+    plt.imshow(abs(pic), cmap='gray')
+"""
