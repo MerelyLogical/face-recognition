@@ -1,1 +1,10 @@
 face.mat
+data_test.npy
+data_train.npy
+eival.npy
+eivec.npy
+label_test.npy
+label_train.npy
+LDeival.npy
+LDeivec.npy
+phi_matrix.npy

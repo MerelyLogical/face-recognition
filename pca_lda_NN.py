@@ -15,13 +15,13 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 #load the variables from files
-data_train = np.load("data_train2.npy");
-label_train = np.load("label_train2.npy");
-data_test = np.load("data_test2.npy");
-label_test = np.load("label_test2.npy");
-phi_matrix = np.load("phi_matrix2.npy");
-eival = np.load("eival2.npy");
-eivec = np.load("eivec2.npy");
+data_train = np.load("data_train.npy");
+label_train = np.load("label_train.npy");
+data_test = np.load("data_test.npy");
+label_test = np.load("label_test.npy");
+phi_matrix = np.load("phi_matrix.npy");
+eival = np.load("eival.npy");
+eivec = np.load("eivec.npy");
 
 #--------------------------------------------------------------------------------
 # Doing PCA first 
@@ -31,7 +31,7 @@ success_rate_matrix = []
 M_lda_range = []
 M_pca_range =[]
 M_pca_ran =[]
-for pca_temp in range(55,405,20):
+for pca_temp in range(150,151):
     M_pca_ran.append(pca_temp)
 success_rate_array = []
   
@@ -89,7 +89,7 @@ for M_pca in M_pca_ran:
     
     #M_lda_range = [15,20,]
     
-    for M_lda in range (1,51):
+    for M_lda in range (1,20):
         M_lda_range.append(M_lda)
         M_pca_range.append(M_pca)
         ldaEigenval = eival_lda[indexEigenvalue_lda[-M_lda:]]
@@ -119,6 +119,7 @@ for M_pca in M_pca_ran:
           
         
         loss_fun = 0                   # the following is projecting each pic in test set onto eigen vector
+        results = []
         for test_idx in range(0, len(label_test)):
             test_pic = data_test[:,test_idx]    
             nrom_test_pic = test_pic - mean_face    #normalize x in test set #mean face
@@ -147,23 +148,33 @@ for M_pca in M_pca_ran:
                 error = np.linalg.norm(e[:,i])
                 if error < least_error:
                     least_error = error
-                    count =i
-        
+                    count = i
+            results.append((label_train[count], label_test[test_idx]))
             if label_train[count]!= label_test[test_idx]:
                 loss_fun = loss_fun + 1
                 
+        # plot confusion matrix
+        cmat = np.zeros((52,52))
+        
+        for case in results:
+            cmat[case[0]-1, case[1]-1] += 1
+        
+        plt.figure()
+        plt.imshow(cmat, cmap='gray_r')
+        
         success_rate_array.append((len(label_test) - loss_fun)/ len(label_test))
         #print(loss_fun)
         print("M_pca:",M_pca," M_lda: ",M_lda, " success_rate", (len(label_test) - loss_fun)/ len(label_test))
+        
+
+        
     #plt.plot(success_rate_array)
 
-fig = plt.figure()
-ax = Axes3D(fig)
+fig2 = plt.figure()
+ax = Axes3D(fig2)
 ax.scatter3D(np.array(M_pca_range), np.array(M_lda_range), np.array(success_rate_array))
 ax.plot3D(np.array(M_pca_range), np.array(M_lda_range), np.array(success_rate_array))
 ax.set_title("Performance with various hyper-parameter")
 ax.set_xlabel("M_pca")
 ax.set_ylabel("M_lda")
 ax.set_zlabel("success_rate")
-
-
