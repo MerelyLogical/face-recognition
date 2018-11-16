@@ -1,104 +1,153 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 25 23:02:53 2018
+Created on Thu Nov 15 16:01:26 2018
 
 @author: zw4215, zw4315
-
 """
-#Q1 Application of Eigen faces 
-#b) Alternative methods using mimimum reconstruction error J
-
-
+import scipy.io as sio
 import numpy as np
 import matplotlib.pyplot as plt
 
-#load the variables from files
-data_train = np.load("data_train.npy");
-label_train = np.load("label_train.npy");
-data_test = np.load("data_test.npy");
-label_test = np.load("label_test.npy");
-phi_matrix = np.load("phi_matrix.npy");
-eival = np.load("eival.npy");
-eivec = np.load("eivec.npy");
-LDeival = np.load("LDeival.npy");
-LDeivec = np.load("LDeivec.npy");
+mat = sio.loadmat('face.mat')
+data = mat.get("X", "Data read error")
+label = mat.get("l", "Label read error")
 
+np.random.seed(42)
 
-M = 416
+data_label = np.vstack([data, label]).reshape(2577, 52, 10)
+for i in range (52):
+    class_slice = data_label[:, i, :].transpose()
+    np.random.shuffle(class_slice)
 
-LDeivec = LDeivec.transpose()
-LDindexEigenvalue = np.argsort(LDeival)
+data_train = np.concatenate(data_label[:, :, 0:8].transpose(), 0).transpose()
+data_test = np.concatenate(data_label[:, :, 8:10].transpose(), 0).transpose()
+label_train = data_train[2576,:]
+label_test = data_test[2576,:]
 
-LDpcaEigenval = LDeival[LDindexEigenvalue[-M:]]
-LDpcaEigenvec = LDeivec[LDindexEigenvalue[-M:]]
+data_train = np.delete(data_train, 2576, 0)
+data_test = np.delete(data_test, 2576, 0)
 
+class_matrix =[]       
+for i in range(1,53):
+    class_matrix.append([])
+    for j in range(len(label_train)):
+        if i == label_train[j]:
+            class_matrix[i-1].append(data_train[:,j])
 
+total_face = np.zeros(2576)
+mean_face_matrix = np.zeros(shape=(2576,52))
+for i in range(len(class_matrix)):
+    for j in range(0,8):
+        total_face = class_matrix[i][j] + total_face 
+    mean_face = total_face /8
+    mean_face_matrix[:,i] = mean_face_matrix[:,i] + mean_face
+    total_face = np.zeros(2576)
 
-LDreeigenvec = np.zeros(2576)
-for i in range(0, M):
-    LDvecdir = np.dot(phi_matrix, LDpcaEigenvec[i,:])      # A*v = u
-    LDnormed = LDvecdir/np.linalg.norm(LDvecdir) 
-    LDreeigenvec = np.column_stack((LDreeigenvec ,LDnormed))
+succ_rate_array = []
+M_arr =[]
+for M in range(1,9):
+    besteigenvec_matrix = [] 
+    besteigenval_matrix = []  
+    M_arr.append(M)
+    for i in range(0,52):
+        Ai = class_matrix[i][0] - mean_face_matrix[:,i]  
+    
+        for j in range (1,8):
+            column_sub = class_matrix[i][j] - mean_face_matrix[:,i]  
+            Ai = np.column_stack((Ai, column_sub))
+    
+        LDS = (np.dot(Ai.transpose(), Ai))/Ai.shape[1]      #(1/N)*ATA
+        LDeival, LDeivec = np.linalg.eig(LDS)          #low -dimensional computation
+    
+       # eigenvec_matrix.append(LDeivec)
+       # eigenval_matrix.append(LDeival)
+    
+        LDeivec = LDeivec.transpose()
+        LDindexEigenvalue = np.argsort(LDeival)
+        
+        LDpcaEigenval = LDeival[LDindexEigenvalue[-M:]]
+        LDpcaEigenvec = LDeivec[LDindexEigenvalue[-M:]]
+        
+        
+        
+        LDreeigenvec = np.zeros(2576)
+        for i in range(0, M):
+            LDvecdir = np.dot(Ai, LDpcaEigenvec[i,:])      # A*v = u
+            LDnormed = LDvecdir/np.linalg.norm(LDvecdir) 
+            LDreeigenvec = np.column_stack((LDreeigenvec ,LDnormed))
+            
+            
+        
+        bestLDpcaEigenvec = LDreeigenvec.transpose()[::-1][:-1,:]   
+        bestLDpcaEigenval = LDpcaEigenval[::-1]        # print the eigenface with high energy first
+        besteigenvec_matrix.append(bestLDpcaEigenvec)
+        besteigenval_matrix.append(bestLDpcaEigenval)  
+    
+     #construct the phi matrix for the test set
+    all_class_reconstruct = []
+    for i in range(0,52):
+        all_class_reconstruct.append([])
+        mean_face = mean_face_matrix[:,i]
+        phi_test = data_test[:,0] - mean_face   
+        
+        for j in range (1,data_test.shape[1]):
+           column_sub = data_test[:,j] - mean_face
+           phi_test = np.column_stack((phi_test, column_sub))
+           
+        # reconstruct the image in test set  
+        reconstruct_test = np.zeros(2576)
+        for pic_idx in range (0, data_test.shape[1]):
+            LDai = np.dot(phi_test[:,pic_idx].transpose(), besteigenvec_matrix[i].transpose()[:, 0])
+            LDsum = mean_face +  np.dot(LDai,besteigenvec_matrix[i].transpose()[:, 0])
+            
+            for k in range(1,M):    
+                LDai = np.dot(phi_test[:,pic_idx].transpose(), besteigenvec_matrix[i].transpose()[:, k])
+                LDsum = LDsum + np.dot(LDai,besteigenvec_matrix[i].transpose()[:, k])
+            
+            reconstruct_test= np.column_stack((reconstruct_test, LDsum))
+            reconstruct_test_final= np.delete(reconstruct_test, 0, 1)
+        all_class_reconstruct[i].append(reconstruct_test_final)
     
     
-
-bestLDpcaEigenvec = LDreeigenvec.transpose()[::-1][:-1,:]   
-bestLDpcaEigenval = LDpcaEigenval[::-1]        # print the eigenface with high energy first
-
-
-#construct the phi matrix for the test set
-mean_face = np.mean(data_train, axis=1) 
-phi_test = data_test[:,0] - mean_face   
-
-for i in range (1,data_test.shape[1]):
-   column_sub = data_test[:,i] - mean_face
-   phi_test = np.column_stack((phi_test, column_sub))
-   
-# reconstruct the image in test set  
-reconstruct_test = np.zeros(2576)
-for pic_idx in range (0, data_test.shape[1]):
-    LDai = np.dot(phi_test[:,pic_idx].transpose(), bestLDpcaEigenvec.transpose()[:, 0])
-    LDsum = mean_face +  np.dot(LDai,bestLDpcaEigenvec.transpose()[:, 0])
-    
-    for i in range(1,M):    
-        LDai = np.dot(phi_test[:,pic_idx].transpose(), bestLDpcaEigenvec.transpose()[:, i])
-        LDsum = LDsum + np.dot(LDai,bestLDpcaEigenvec.transpose()[:, i])
-    
-    reconstruct_test= np.column_stack((reconstruct_test, LDsum))
-    reconstruct_test_final= np.delete(reconstruct_test, 0, 1)
-
-# finding the minimum reconstruct error
-
-for i in range(0, 20):
-    pic = np.swapaxes( np.reshape( np.array( reconstruct_test_final[:,i]), (46, 56) ), 0, 1)
-    plt.subplot(4,5,i+1)
+    #np.array(all_class_reconstruct[0][0][:,3]
+    """
+    xx = 7
+    pic =  np.swapaxes( np.reshape( np.array(all_class_reconstruct[15][0][:,xx]), (46, 56) ), 0, 1)
+    pic2 = np.swapaxes(np.reshape( np.array(data_test[:,xx]), (46, 56)), 0, 1)
+    plt.subplot(1,2,1)
     plt.axis('off')
-    plt.imshow(abs(pic), cmap='gray')
-
-
+    plt.imshow(pic, cmap='gray') 
+    plt.subplot(1,2,2)
+    plt.imshow(pic2, cmap='gray') 
+    """
     
-#build test_arr for each column in the testing set,expand it to the same size as training set
-loss_fun = 0   
-for test_idx in range(0, len(label_test)):
-    test_arr = np.repeat(reconstruct_test_final[:,test_idx], len(label_train))
-    test_arr = np.swapaxes( np.reshape( np.array(test_arr), (data_test.shape[0],len(label_train))), 0, 1)
-    test_arr = test_arr.transpose()    
     
-    J = data_train - test_arr                #This is the reconstruction error
-    
-    least_error = np.linalg.norm(J[:,0])     # start from the first column
-
-
+    error_array = []
     count = 0
-    for i in range(1, len(label_train)):              #finding where the mim error is, count is its index
-        error = np.linalg.norm(J[:,i])
-        if error < least_error:
-            least_error = error
-            count =i
-
-    if label_train[count]!= label_test[test_idx]:
-        loss_fun = loss_fun + 1
-
-print(loss_fun)                
-print((len(label_test) - loss_fun)/ len(label_test))     
+    count_array = []
+    
+    #for each image in test set
+    for i in range(0,104):
+        count = 1
+        least_error = np.linalg.norm(data_test[:, i] - all_class_reconstruct[0][0][:,i])
+        for j in range(1,52):
+            error = np.linalg.norm(data_test[:, i] - all_class_reconstruct[j][0][:,i])
+            #if i == 7 and j == 7 :
+                   # print(88888888, i,j,error,least_error,count)
+            if error < least_error:             # found the class has minimum recon error
+                least_error = error
+                count = j + 1
+               # if i == 7:
+                 #   print(i,j,error,least_error,count)
+        count_array.append(count)
+    
+    loss = 0
+    for image in range(0,104):
+        if label_test[image] != count_array[image]:
+            loss = loss + 1
+    
+    success_rate =  (len(label_test) - loss)/len(label_test)
+    succ_rate_array.append(success_rate)
+    print(success_rate)
+plt.plot(M_arr,succ_rate_array)
