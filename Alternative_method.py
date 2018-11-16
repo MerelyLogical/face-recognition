@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Nov 15 16:01:26 2018
-
+Q1 Application of eigenfaces
+b) Alternative method to NN classification
 @author: zw4215, zw4315
 """
 import scipy.io as sio
