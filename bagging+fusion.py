@@ -25,7 +25,7 @@ label_test = data_test[2576,:]
 data_train = np.delete(data_train, 2576, 0)
 data_test = np.delete(data_test, 2576, 0)
 
-#------bagging 
+#---------------bagging 
 data_train_matrix = []
 T_amount = 3
 for T in range(0,T_amount):
@@ -58,7 +58,7 @@ np.save("label_test.npy", label_test);
 #perform pca-lda with T models of random data, then use majority voting
 #First computing the eigenvalue and eigenvector of the training data
 label_train = random_training_label
-Mpca = 50
+Mpca = 30
 Bestpca_T =[]
 for T in range(0,T_amount):
     mean_face = np.mean(data_train_matrix[T][0], axis=1)        
@@ -75,8 +75,17 @@ for T in range(0,T_amount):
     
     LDpcaEigenval = LDeival[LDindexEigenvalue[-Mpca:]]
     LDpcaEigenvec = LDeivec[LDindexEigenvalue[-Mpca:]]
+#---------------------------------------------------------------------------------------
+    Positive_eigenval = 0
+    for i in range(len(LDeival)):
+        if LDeival[i] > 0.00001:
+            Positive_eigenval = Positive_eigenval + 1          #Positive_eigenval = N-1
     
-    Bestpca_T .append([])
+    if(Positive_eigenval < Mpca):
+        print("Mpca is too big")
+#-------------------------------------------------------------------------------------
+
+    Bestpca_T.append([])
     LDreeigenvec = np.zeros(2576)
     for i in range(0, Mpca):
         LDvecdir = np.dot(phi_matrix, LDpcaEigenvec[i,:])      # A*v = u
