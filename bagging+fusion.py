@@ -25,6 +25,7 @@ label_test = data_test[2576,:]
 data_train = np.delete(data_train, 2576, 0)
 data_test = np.delete(data_test, 2576, 0)
 
+MDDD = np.zeros((len(label_train), len(label_test)))
 #---------------bagging 
 data_train_matrix = []
 T_amount = 3
@@ -58,7 +59,7 @@ np.save("label_test.npy", label_test);
 #perform pca-lda with T models of random data, then use majority voting
 #First computing the eigenvalue and eigenvector of the training data
 label_train = random_training_label
-Mpca = 30
+Mpca = 80
 Bestpca_T =[]
 for T in range(0,T_amount):
     mean_face = np.mean(data_train_matrix[T][0], axis=1)        
@@ -177,7 +178,7 @@ for T in range(0,T_amount):
       
     
     loss_fun = 0                   # the following is projecting each pic in test set onto eigen vector
-
+    MDD = np.zeros(len(label_train))
     for test_idx in range(0, len(label_test)):
         test_pic = data_test[:,test_idx]    
         nrom_test_pic = test_pic - mean_face    #normalize x in test set #mean face
@@ -199,11 +200,12 @@ for T in range(0,T_amount):
  # Doing test       
         e = W_train_fianl - test_arr
         least_error = np.linalg.norm(e[:,0])     # start from the first column
-    
+        MD = least_error
     
         count = 0
         for i in range(1, len(label_train)):
             error = np.linalg.norm(e[:,i])
+            MD = np.append(MD, error)
             if error < least_error:
                 least_error = error
                 count = i
@@ -212,8 +214,10 @@ for T in range(0,T_amount):
         if label_train[count]!= label_test[test_idx]:
             loss_fun = loss_fun + 1     
 
+        MDD = np.column_stack((MDD, MD))
     success_rate_array.append((len(label_test) - loss_fun)/ len(label_test))
-    et_array.append(loss_fun/len(label_test))                                  #assume et(x)= 1 for misclassification
+    et_array.append(loss_fun/len(label_test))        #assume et(x)= 1 for misclassification
+    MDDD = np.dstack((MDDD, MDD[:,1:]))                          
 Eav = np.mean(et_array)
 #---------------------------------------------------------------------------------------------
 #Majority voting and committe 

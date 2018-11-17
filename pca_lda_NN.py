@@ -34,7 +34,6 @@ M_pca_ran =[]
 for pca_temp in range(150,151):
     M_pca_ran.append(pca_temp)
 success_rate_array = []
-  
 for M_pca in M_pca_ran:
     pcaEigenval = eival[indexEigenvalue[-M_pca:]]
     pcaEigenvec = eivec[indexEigenvalue[-M_pca:]]
@@ -141,9 +140,9 @@ for M_pca in M_pca_ran:
             
             e = W_train_fianl - test_arr
             least_error = np.linalg.norm(e[:,0])     # start from the first column
-        
-        
+
             count = 0
+            
             for i in range(1, len(label_train)):
                 error = np.linalg.norm(e[:,i])
                 if error < least_error:
@@ -152,20 +151,20 @@ for M_pca in M_pca_ran:
             results.append((label_train[count], label_test[test_idx]))
             if label_train[count]!= label_test[test_idx]:
                 loss_fun = loss_fun + 1
-                
+
         # plot confusion matrix
-        cmat = np.zeros((52,52))
+        # cmat = np.zeros((52,52))
         
-        for case in results:
-            cmat[case[0]-1, case[1]-1] += 1
+        # for case in results:
+        #     cmat[case[0]-1, case[1]-1] += 1
         
-        plt.figure()
-        plt.imshow(cmat, cmap='gray_r')
+        # plt.figure()
+        # plt.imshow(cmat, cmap='gray_r')
         
         success_rate_array.append((len(label_test) - loss_fun)/ len(label_test))
         #print(loss_fun)
         print("M_pca:",M_pca," M_lda: ",M_lda, " success_rate", (len(label_test) - loss_fun)/ len(label_test))
-        
+
 
         
     #plt.plot(success_rate_array)
