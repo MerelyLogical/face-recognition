@@ -35,8 +35,10 @@ data_test = np.delete(data_test, 2576, 0)
 MDDD = np.zeros((len(label_train), len(label_test)))
 #---------------bagging 
 data_train_matrix = []
-T_amount = 20
+T_amount = 150
 for T in range(0,T_amount):
+    print('bagging')
+    print(T)
     data_train_matrix.append([])
     class_matrix =[]       
     for i in range(1,53):
@@ -66,9 +68,11 @@ np.save("label_test.npy", label_test);
 #perform pca-lda with T models of random data, then use majority voting
 #First computing the eigenvalue and eigenvector of the training data
 label_train = random_training_label
-Mpca = 80
+Mpca = 150
 Bestpca_T =[]
 for T in range(0,T_amount):
+    print('pcalda')
+    print(T)
     mean_face = np.mean(data_train_matrix[T][0], axis=1)        
     phi_matrix = data_train_matrix[T][0][:,0] - mean_face   
     
@@ -107,6 +111,8 @@ for T in range(0,T_amount):
 fish_array = []
 
 for T in range(0,T_amount):
+    print('fisher')
+    print(T)
     data_train = data_train_matrix[T][0]
     bestpcaEigenvec = Bestpca_T[T][0]
     distinct_class = np.unique(label_train)                           # types of distinct faces
@@ -167,7 +173,8 @@ success_rate_array = []
 majority_count = []
 et_array = []
 #Build overall W for the whole training set, 416 pics, W should be M rows, 416 columns
-for T in range(0,T_amount): 
+for T in range(0,T_amount):
+    print(T)
     data_train = data_train_matrix[T][0]
     mean_face = np.mean(data_train, axis=1)
     majority_count.append([])
