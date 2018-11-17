@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov  9 18:10:20 2018
+
+@author: edward
+"""
 
 # Q3 randomnization 
 # a) bagging 
@@ -28,7 +35,7 @@ data_test = np.delete(data_test, 2576, 0)
 MDDD = np.zeros((len(label_train), len(label_test)))
 #---------------bagging 
 data_train_matrix = []
-T_amount = 3
+T_amount = 20
 for T in range(0,T_amount):
     data_train_matrix.append([])
     class_matrix =[]       
@@ -217,7 +224,7 @@ for T in range(0,T_amount):
         MDD = np.column_stack((MDD, MD))
     success_rate_array.append((len(label_test) - loss_fun)/ len(label_test))
     et_array.append(loss_fun/len(label_test))        #assume et(x)= 1 for misclassification
-    MDDD = np.dstack((MDDD, MDD[:,1:]))                          
+    MDDD = np.dstack((MDDD, MDD[:,1:]))
 Eav = np.mean(et_array)
 #---------------------------------------------------------------------------------------------
 #Majority voting and committe 
@@ -254,5 +261,20 @@ for i in range(len(label_test)):
         mloss_fun = mloss_fun + 1
     
 fusion_success_rate  = (len(label_test) - mloss_fun)/ len(label_test)   
-print(fusion_success_rate)
+print('Voting: '+str(fusion_success_rate))
 print(Eav/Ecom)
+#---------------------------------------------------------------------------------------------
+# Committee Machine
+MDDD = MDDD[:,:,1:]
+cm_results = np.zeros(len(label_test))
+for test in range(0,len(label_test)):
+    cm_pertestresults = np.zeros(52)
+    for klas in range(0,52):
+        for pik in range(0,8):
+            idks = (klas * 8) + pik
+            cm_pertestresults[klas] += 1 / (np.sum(MDDD[idks,test,:]))
+    cm_results[test] = np.argmax(cm_pertestresults) + 1
+    
+fails = (np.count_nonzero(cm_results - label_test))
+cm_successrate = 1 - (fails / len(label_test))
+print('Committee: '+str(cm_successrate))
