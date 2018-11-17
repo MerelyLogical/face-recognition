@@ -123,7 +123,7 @@ for T in range(0,T_amount):
     Sb = np.zeros(shape=(2576,2576)) 
     m_arr = np.empty(shape=(2576,1))                              # array of class mean in D dimensional space
     count = 0
-    m = np.mean(data_train, axis=1) 
+    m = np.mean(data_train, axis=1) qqqqqqqqqqqq
     
     for element in range(len(distinct_class)):
         for i in range (len(label_train)):
