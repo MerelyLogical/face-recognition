@@ -35,9 +35,9 @@ for i in range(len(LDeival)):
 #--------------------------------------------------------------------------
 #generate T random subspace
 # the first M0 dimensions are fixed as the M0 largest eigenspace in W
-M0 = 1
-M1 = 1
-T_amount = 3
+M0 = 90
+M1 = 60
+T_amount = 6
 random_subspace = []
 for T in range(0,T_amount):
     LDeivec = LDeivec.transpose()
@@ -123,7 +123,7 @@ for T in range(0,T_amount):
     eivec_lda = eivec_lda.transpose()          # transpose it to sort the eigen vectors
     indexEigenvalue_lda = np.argsort(eival_lda)
   
-    for M_lda in range (1,2):
+    for M_lda in range (30,31):
         ldaEigenval = eival_lda[indexEigenvalue_lda[-M_lda:]]
         ldaEigenvec = eivec_lda[indexEigenvalue_lda[-M_lda:]]
         bestldaEigenvec = ldaEigenvec[::-1]     # print the eigenface with high energy first
