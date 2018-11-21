@@ -10,10 +10,12 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
 
-data_train = np.load("random_training_data.npy");
-label_train = np.load("random_training_label.npy");
+data_train = np.load("data_train.npy");
+label_train = np.load("label_train.npy");
 data_test = np.load("data_test.npy");
 label_test = np.load("label_test.npy");
+
+MDDD = np.zeros((len(label_train), len(label_test)))
 
 #Computing the eigenvalue and eigenvector of the training data
 mean_face = np.mean(data_train, axis=1)        
@@ -33,9 +35,9 @@ for i in range(len(LDeival)):
 #--------------------------------------------------------------------------
 #generate T random subspace
 # the first M0 dimensions are fixed as the M0 largest eigenspace in W
-M0 = 50
-M1 = 10
-T_amount = 3
+M0 = 90
+M1 = 60
+T_amount = 6
 random_subspace = []
 for T in range(0,T_amount):
     LDeivec = LDeivec.transpose()
@@ -121,7 +123,7 @@ for T in range(0,T_amount):
     eivec_lda = eivec_lda.transpose()          # transpose it to sort the eigen vectors
     indexEigenvalue_lda = np.argsort(eival_lda)
   
-    for M_lda in range (1,20):
+    for M_lda in range (30,31):
         ldaEigenval = eival_lda[indexEigenvalue_lda[-M_lda:]]
         ldaEigenvec = eivec_lda[indexEigenvalue_lda[-M_lda:]]
         bestldaEigenvec = ldaEigenvec[::-1]     # print the eigenface with high energy first
@@ -145,16 +147,16 @@ for T in range(0,T_amount):
     for pic_idx in range (0, len(label_train)):
         fishai = np.dot(phi_matrix[:,pic_idx].transpose(), fish.transpose()[:, 0])
         single_w = fishai
-        
+      
         for i in range(1,M_lda):    
             fishai = np.dot(phi_matrix[:,pic_idx].transpose(), fish.transpose()[:, i])
             single_w = np.column_stack((single_w,fishai))           #this is the w for each pic using best M eigen vectors
-            
+       
         W_train = np.column_stack((W_train, single_w.transpose()))    #Overall W for the whole training set, 416 pics, W should be M rows, 416 columns
-      
+    
     
     loss_fun = 0                   # the following is projecting each pic in test set onto eigen vector
-
+    MDD = np.zeros(len(label_train))
     for test_idx in range(0, len(label_test)):
         test_pic = data_test[:,test_idx]    
         nrom_test_pic = test_pic - mean_face    #normalize x in test set #mean face
@@ -176,22 +178,26 @@ for T in range(0,T_amount):
  # Doing test       
         e = W_train_fianl - test_arr
         least_error = np.linalg.norm(e[:,0])     # start from the first column
-    
-    
+
+        MD = least_error    
         count = 0
         for i in range(1, len(label_train)):
             error = np.linalg.norm(e[:,i])
+            MD = np.append(MD, error)
             if error < least_error:
                 least_error = error
                 count = i
         
         majority_count[T].append(count)                   #record prediction for each model
         if label_train[count]!= label_test[test_idx]:
-            loss_fun = loss_fun + 1     
-
+            loss_fun = loss_fun + 1 
+            
+        MDD = np.column_stack((MDD, MD))
     success_rate_array.append((len(label_test) - loss_fun)/ len(label_test))
     et_array.append(loss_fun/len(label_test))                                  #assume et(x)= 1 for misclassification
+    MDDD = np.dstack((MDDD, MDD[:,1:]))
 Eav = np.mean(et_array)
+
 #---------------------------------------------------------------------------------------------
 #Majority voting and committe 
 prediction = []                                           #record prediction for each model
@@ -229,3 +235,19 @@ for i in range(len(label_test)):
 fusion_success_rate  = (len(label_test) - mloss_fun)/ len(label_test)   
 print(fusion_success_rate)
 print(Eav/Ecom)
+
+#---------------------------------------------------------------------------------------------
+# Committee Machine
+MDDD = MDDD[:,:,1:]
+cm_results = np.zeros(len(label_test))
+for test in range(0,len(label_test)):
+    cm_pertestresults = np.zeros(52)
+    for klas in range(0,52):
+        for pik in range(0,8):
+            idks = (klas * 8) + pik
+            cm_pertestresults[klas] += 1 / (np.sum(MDDD[idks,test,:]))
+    cm_results[test] = np.argmax(cm_pertestresults) + 1
+    
+fails = (np.count_nonzero(cm_results - label_test))
+cm_successrate = 1 - (fails / len(label_test))
+print('Committee: '+str(cm_successrate))

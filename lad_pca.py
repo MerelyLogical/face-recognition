@@ -10,13 +10,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #load the variables from files
-data_train = np.load("data_train.npy");
-label_train = np.load("label_train.npy");
-data_test = np.load("data_test.npy");
-label_test = np.load("label_test.npy");
-phi_matrix = np.load("phi_matrix.npy");
-eival = np.load("eival.npy");
-eivec = np.load("eivec.npy");
+data_train = np.load("data_train2.npy");
+label_train = np.load("label_train2.npy");
+data_test = np.load("data_test2.npy");
+label_test = np.load("label_test2.npy");
+phi_matrix = np.load("phi_matrix2.npy");
+eival = np.load("eival2.npy");
+eivec = np.load("eivec2.npy");
+
+#--------------------------------------------------------------------------------
+# Doing PCA first 
+M_pca = 30
+eivec = eivec.transpose()          # transpose it to sort the eigen vectors
+indexEigenvalue = np.argsort(eival)
+pcaEigenval = eival[indexEigenvalue[-M_pca:]]
+pcaEigenvec = eivec[indexEigenvalue[-M_pca:]]
+bestpcaEigenvec = pcaEigenvec[::-1]     # print the eigenface with high energy first
+bestpcaEigenval = abs(pcaEigenval[::-1]) 
+
+#--------------------------------------------------------------------------------
 
 #find class mean in D-dimensional space
 distinct_class = np.unique(label_train)                           # types of distinct faces
@@ -50,10 +62,13 @@ for element in range(len(distinct_class)):
     Sw = Sw + Si
     Si = np.zeros(shape=(2576,2576))        
 
-S_lda = np.dot(np.linalg.inv(Sw),Sb) 
+Sw_pca = np.dot(np.dot(bestpcaEigenvec,Sw),bestpcaEigenvec.transpose())
+Sb_pca = np.dot(np.dot(bestpcaEigenvec,Sb),bestpcaEigenvec.transpose())
+
+S_lda = np.dot(np.linalg.inv(Sw_pca),Sb_pca) 
 eival_lda, eivec_lda = np.linalg.eig(S_lda)
 
-M_lda = 20
+M_lda = 25
 eivec_lda = eivec_lda.transpose()          # transpose it to sort the eigen vectors
 indexEigenvalue_lda = np.argsort(eival_lda)
 ldaEigenval = eival_lda[indexEigenvalue_lda[-M_lda:]]
@@ -67,11 +82,3 @@ for i in range(0, 20):
     plt.axis('off')
     plt.imshow(abs(pic), cmap='gray')
     
-    
-"""    
-for i in range(0, 20):
-    pic = np.swapaxes( np.reshape( np.array(m_arr[:,i+1]), (46, 56) ), 0, 1)
-    plt.subplot(4,5,i+1)
-    plt.axis('off')
-    plt.imshow(abs(pic), cmap='gray')
-"""
